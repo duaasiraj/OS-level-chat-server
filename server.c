@@ -51,7 +51,35 @@ int server_init(const char *ip, int port)
 
 void server_run(int server_fd, threadpool_t *pool)
 {
+    signal(SIGINT,  server_shutdown);//registers if control c pressed close server gracefully by calling it
+    signal(SIGTERM, server_shutdown);//registers commands like kill and does same
+    signal(SIGPIPE, SIG_IGN);//ignore when the client tries writing into a closed socket     
+    logline(LOG_INFO, "Waiting for connections...");
+
+    while (g_running) {
+        struct sockaddr_in client_addr;//client data structure
+        socklen_t addr_len = sizeof(client_addr);
+        int client_fd = accept(server_fd,(struct sockaddr *)&client_addr,&addr_len);//accept client and return new socket fd
+        if (client_fd < 0) {
+            if (errno == EINTR) continue;   //interrupted by signal
+            logline(LOG_ERROR, "accept() failed");
+            break;
+        }
+        logline(LOG_INFO, "New connection: fd=%d from %s",client_fd, inet_ntoa(client_addr.sin_addr));
+        registry_add(client_fd, client_addr);//add the client by registering it
+        tp_enqueue(pool, client_fd);//push it top queue of threadpool
+    }
+}
+
 }
 void server_shutdown(int sig)
 {
+    (void)sig;
+    logline(LOG_INFO, "Shutting down...");
+    g_running = 0;
+    broadcast("Server is shutting down. Goodbye.\r\n");
+    tp_destroy(&g_pool);//destroy threadpool
+    close(g_server_fd);//close server
+    logline(LOG_INFO, "Done.");
+    exit(0);
 }
