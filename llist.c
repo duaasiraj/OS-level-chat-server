@@ -102,11 +102,30 @@ list_entry *llist_find_by_nickname(list_entry *list_start, char *nickname)
     }
     return NULL;
 }
-
+//count of nodes with actual clients
 int llist_get_count(list_entry *list_start)
 {
+    list_entry *cur = list_start;
+    int count = 0;
+    while (cur != NULL) {
+        pthread_mutex_lock(cur->mutex);
+        if (cur->client_info != NULL) count++;
+        pthread_mutex_unlock(cur->mutex);
+        cur = cur->next;
+    }
+    return count;
 }
-
+//copies nicknames to array and returns their count
 int llist_get_nicknames(list_entry *list_start, char **nicks)
 {
+    list_entry *cur = list_start;
+    int count = 0;
+    while (cur != NULL) {
+        pthread_mutex_lock(cur->mutex);
+        if (cur->client_info != NULL)
+            strncpy(nicks[count++], cur->client_info->nickname, 19);
+        pthread_mutex_unlock(cur->mutex);
+        cur = cur->next;
+    }
+    return count;
 }
