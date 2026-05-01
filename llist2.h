@@ -29,6 +29,6 @@ int  llist_remove_by_sockfd(list_entry *list_start, int sockfd);//deletion by fi
 list_entry *llist_find_by_sockfd(list_entry *list_start, int sockfd);//search function
 list_entry *llist_find_by_nickname(list_entry *list_start, char *nickname);//search function
 int llist_get_count(list_entry *list_start);//counting number of clients
-int list_get_nicknames(list_entry *list_start, char **nicks);//getting nicknames
+int llist_get_nicknames(list_entry *list_start, char **nicks);//getting nicknames
 
 #endif 
