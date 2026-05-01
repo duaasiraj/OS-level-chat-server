@@ -3,7 +3,7 @@ CFLAGS  = -Wall -Wextra -pthread -std=c99
 LDFLAGS = -pthread
 
 SERVER_SRCS = main.c server.c client.c threadpool.c \
-              socket_util.c llist2.c log.c colors.c
+              socket_util.c llist.c log.c colors.c
 
 CLIENT_SRCS = client_main.c socket_util.c log.c
 
