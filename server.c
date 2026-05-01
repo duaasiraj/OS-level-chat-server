@@ -71,7 +71,7 @@ void server_run(int server_fd, threadpool_t *pool)
     }
 }
 
-}
+
 void server_shutdown(int sig)
 {
     (void)sig;
