@@ -13,7 +13,7 @@ void registry_init(void);
 void registry_add(int fd, struct sockaddr_in addr);
 void registry_remove(int fd);
 list_entry* registry_find_by_fd(int fd);
-list entry* registry_find_by_nick(const char* nick);
+list_entry* registry_find_by_nick(const char* nick);
 //<<<<<<>>>>>> end of registry related functions <<<<<<>>>>>>
 
 void handle_client(int fd);
