@@ -229,7 +229,7 @@ void handle_client(int fd){
   
   // <<<<>>>> authorizing the user <<<<>>>> 
   const char* prompt = "Welcome || Enter your username: ";
-  send(fd, prompt, strlen(prompt), 0)
+  send(fd, prompt, strlen(prompt), 0);
 
   memset(buffer, 0, sizeof(buffer));
   n = recv(fd, buffer, sizeof(buffer)-1, 0);
@@ -259,7 +259,7 @@ void handle_client(int fd){
     return;
   }
   
-  char nickname[30];
+  char nickname[20];
   strncpy(nickname, buffer, sizeof(nickname)-1);
   nickname[sizeof(nickname) - 1] = '\0';
   
@@ -267,7 +267,7 @@ void handle_client(int fd){
   
   list_entry* entry = llist_find_by_sockfd(&client_list, fd);
   if(entry && entry->client_info){
-    strncpy(entry->client_info->nickname, nickname, sizeof(entry->client_info->nickname)-1)
+    strncpy(entry->client_info->nickname, nickname, sizeof(entry->client_info->nickname)-1);
   }
   
   pthread_mutex_unlock(&client_list_mutex);
@@ -292,7 +292,7 @@ void handle_client(int fd){
       break;
     }
     
-    if(n==0){
+    if(n<0){
       logline(LOG_ERROR, "recv error on fd=%d", fd);
       break;
     }
@@ -328,13 +328,13 @@ void handle_client(int fd){
 
 void process_msg(const char* msg, int sender_fd){
 
-  list_entry* entry = registry_find_by_fd(fd);
+  list_entry* entry = registry_find_by_fd(sender_fd);
   
   if(entry==NULL || entry->client_info == NULL){
     return;
   }
     
-  char nick[30];
+  char nick[20];
   strncpy(nick, entry->client_info->nickname, sizeof(nick)-1);
   nick[sizeof(nick) - 1] = '\0';
   
@@ -362,13 +362,13 @@ void process_msg(const char* msg, int sender_fd){
     pthread_exit(NULL);
   }
   
-  if(strcmp(copy, "who")==0){
+  if(strcmp(copy, "/who")==0){
     
     char* nicks[MAX_CLIENTS];
     for(int i=0;i<MAX_CLIENTS;i++){
       
-      nicks[i] = malloc(30);
-      memset(nicks[i], 0, 30);
+      nicks[i] = malloc(20);
+      memset(nicks[i], 0, 20);
 
     }
     
@@ -392,7 +392,7 @@ void process_msg(const char* msg, int sender_fd){
     return;
   }
   
-  if(strncmp(copy, "/nick", 6)==0){
+  if(strncmp(copy, "/nick ", 6)==0){
     
     char* newnick = copy + 6;
     
@@ -421,14 +421,14 @@ void process_msg(const char* msg, int sender_fd){
   }
   
   
-  if(strncmp(copy, "/me", 4)==0){
+  if(strncmp(copy, "/me ", 4)==0){
     char* action = copy + 4;
     broadcast("%s* %s %s%s\r\n", color_yellow, nick, action, color_normal);
     
     return;
   }
   
-  if(strncmp(copy, "/pm", 4)==0){
+  if(strncmp(copy, "/pm ", 4)==0){
     
     char* rest = copy+4;
     char* target = strtok(rest, " ");
@@ -442,23 +442,23 @@ void process_msg(const char* msg, int sender_fd){
     char outbuffer[1100];
     snprintf(outbuffer, sizeof(outbuffer), "%s[PM from %s]: %s%s\r\n", color_magenta, nick, pmsg, color_normal);
     
-    if(send_private(target, %s, outbuffer) < 0){
+    if(send_private(target, "%s", outbuffer) < 0){
       send(sender_fd, "User not found.\r\n",17,0);
     }else{
       
       char confirm[1100];
-      snprintf(confirm, sizeof(confirm), "%s[PM from %s]: %s%s\r\n", color_magenta, target, pmsg, color_normal);
-      send(senedr_fd, confirm, strlen(confirm), 0)
+      snprintf(confirm, sizeof(confirm), "%s[PM to %s]: %s%s\r\n", color_magenta, target, pmsg, color_normal);
+      send(sender_fd, confirm, strlen(confirm), 0)
       
     }
     return;
   }
   
   if(copy[0] == '/'){
-    send(sender_fd, "Unknown command. Try /who /nick /pm /me /quit\r\n", 48, 0)
+    send(sender_fd, "Unknown command. Try /who /nick /pm /me /quit\r\n", 48, 0);
     return;
   }
   
-  broadcast("%s%s%s: %s\r\n", color_white, nick, color_normal, message);
-  logline(LOG_INFO, "<%s> %s", nick, message);
+  broadcast("%s%s%s: %s\r\n", color_white, nick, color_normal, msg);
+  logline(LOG_INFO, "<%s> %s", nick, msg);
 }
