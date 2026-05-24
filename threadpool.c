@@ -1,10 +1,9 @@
 #include "threadpool.h"
 #include "log.h"
+#include "client.h"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-/* ── only used by workers: ─────────────────────────────────────────────────────────── */
 
 static int tp_dequeue(threadpool_t *pool) //function takes task ID(fd) from the head and reassigns head to the next task ID
 {
@@ -14,7 +13,6 @@ static int tp_dequeue(threadpool_t *pool) //function takes task ID(fd) from the 
     return fd;
 }
 
-/* ── Worker thread ─────────────────────────────────────────────────────────── */
 
 void *tp_worker(void *pool_ptr) {
     threadpool_t *pool = (threadpool_t *)pool_ptr; //pool pointer created of threadpool type
@@ -36,6 +34,7 @@ void *tp_worker(void *pool_ptr) {
         int fd = tp_dequeue(pool); //worker takes up a task from the queue
         pthread_mutex_unlock(&pool->mutex); //once the worker has taken up a task mutex is unlocked for other workers to take up remaining tasks
 
+        handle_client(fd);
      
     }
 
@@ -43,9 +42,7 @@ void *tp_worker(void *pool_ptr) {
 }
 
 
-/*---tp_init intializes the threadpool---
-1)pthread mutex and condition are initialized. 
-2)threads are created*/
+
 void tp_init(threadpool_t *pool) {
     memset(pool, 0, sizeof(threadpool_t)); //used to clear struct of any garbage values
     pthread_mutex_init(&pool->mutex, NULL);
@@ -59,7 +56,6 @@ void tp_init(threadpool_t *pool) {
     logline(LOG_INFO, "Thread pool ready (%d workers)", MAX_WORKERS);
 }
 
-/*tp_enqueue is used to add new tasks to the queue*/
 void tp_enqueue(threadpool_t *pool, int client_fd) {
     pthread_mutex_lock(&pool->mutex); //mutex locks out so that only the producer thread can access the queue and no other threads (worker threads) 
 
@@ -80,7 +76,6 @@ void tp_enqueue(threadpool_t *pool, int client_fd) {
 }
 
 
-/*tp_destroy clears up memory by destroying the threadpool*/
 void tp_destroy(threadpool_t *pool) {
     pthread_mutex_lock(&pool->mutex);
     pool->shutdown = 1;

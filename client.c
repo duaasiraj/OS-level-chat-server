@@ -86,7 +86,7 @@ void broadcast(const char* fmt, ...){
   int count = 0;
   
   pthread_mutex_lock(&client_list_mutex);
-  list_entry* curr = client_list.next;
+  list_entry* curr = &client_list;
   
   while(curr != NULL && count < MAX_CLIENTS){
   
@@ -216,7 +216,7 @@ in UTF-8 encoding, the following format is used
   
   11110xxx 10xxxxxx 10xxxxxx 10xxxxxx => 4 byte => [0xF0 - 0xF7]
   
-the bits written are pre defined bits for these characters, with the 'x' bits holding the actual data. 10xxxxxx represents the continuation bytes for all characters that are more than one byte. continuation bits themselves have their own valid range, i.e, [0x80 - 0xB7]
+the bits written are pre defined bits for these characters, with the 'x' bits holding the actual data. 10xxxxxx represents the continuation bytes for all characters that are more than one byte. continuation bits themselves have their own valid range, i.e, [0x80 - 0xBF]
 
 So yea the code above is just checking that if a char lies in a given range, it should have so and so continuation bytes in front of it, and once valid, we skip over all those bytes and move onto the the next
 
@@ -358,7 +358,8 @@ void process_msg(const char* msg, int sender_fd){
     broadcast("%s<===> %s has quit <===>%s\r\n", color_red, nick, color_normal);
   
     registry_remove(sender_fd);
-    close(sender_fd);  
+    close(sender_fd);
+    logline(LOG_INFO, "'%s' fd = %d session ended",nick, sender_fd);
     pthread_exit(NULL);
   }
   
@@ -377,15 +378,17 @@ void process_msg(const char* msg, int sender_fd){
     pthread_mutex_unlock(&client_list_mutex);
     
     char who_buffer[2048] = {0};
-    snprintf(who_buffer, sizeof(who_buffer), "%s=== ONLINE USERS [%d] ===%s", color_cyan, num, color_normal);
+    snprintf(who_buffer, sizeof(who_buffer), "%s=== ONLINE USERS [%d] ===\r\n%s", color_cyan, num, color_normal);
     
     for(int i=0; i<num;i++){
       strncat(who_buffer, nicks[i], sizeof(who_buffer) - strlen(who_buffer) - 4);
       
       strncat(who_buffer, "\r\n", sizeof(who_buffer) - strlen(who_buffer) - 1);
       
+    }
+
+    for(int i=0;i<MAX_CLIENTS;i++){
       free(nicks[i]);
-      
     }
     
     send(sender_fd, who_buffer, strlen(who_buffer), 0);
@@ -448,7 +451,7 @@ void process_msg(const char* msg, int sender_fd){
       
       char confirm[1100];
       snprintf(confirm, sizeof(confirm), "%s[PM to %s]: %s%s\r\n", color_magenta, target, pmsg, color_normal);
-      send(sender_fd, confirm, strlen(confirm), 0)
+      send(sender_fd, confirm, strlen(confirm), 0);
       
     }
     return;
