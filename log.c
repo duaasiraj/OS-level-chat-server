@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdarg.h>
+#include <pthread.h>
 
+pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int global_loglevel = LOG_INFO;
 
 void logline(int loglevel, const char *format, ...) //ellipsis used to allow the user to pass more than 1 arguement
@@ -21,15 +23,20 @@ void logline(int loglevel, const char *format, ...) //ellipsis used to allow the
         default:        tag = "I"; break;
     }
 
-    printf("[%s %s] ", timestr, tag);
-
+   
     va_list args; //va used becaus of ellipsis '...' va_list reads all arguements from stack the user has passed. 
     va_start(args, format);  //starts reading after the variable format
-    vprintf(format, args);
-    va_end(args);
-
+	 
+    pthread_mutex_lock(&log_mutex);
+	 
+	printf("[%s %s] ", timestr, tag); 
+	vprintf(format, args);
     printf("\n");
     fflush(stdout); //displays text on screen and removes from computers memory
+	 
+	pthread_mutex_unlock(&log_mutex);
+	 
+	va_end(args);
 }
 
 void set_loglevel(int loglevel) {

@@ -1,5 +1,5 @@
 CC      = gcc
-CFLAGS  = -Wall -Wextra -pthread -std=c99
+CFLAGS  = -Wall -Wextra -pthread -std=gnu11
 LDFLAGS = -pthread
 
 SERVER_SRCS = main.c server.c client.c threadpool.c \
@@ -18,10 +18,7 @@ $(SERVER_BIN): $(SERVER_SRCS)
 $(CLIENT_BIN): $(CLIENT_SRCS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-debug: CFLAGS += -g -O0
-debug: all
-
 clean:
 	rm -f $(SERVER_BIN) $(CLIENT_BIN) *.o
 
-.PHONY: all debug clean
+.PHONY: all clean

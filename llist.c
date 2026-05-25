@@ -22,12 +22,14 @@ int llist_insert(list_entry *list_start, client_info *element)
         if (curr->client_info == NULL)
         {
             curr->client_info = element;
-            pthread_mutex_unlock(curr->mutex); // unlock after storing if current is free
+            pthread_mutex_unlock(curr->mutex);
+            inserted = TRUE;
+            break;
         }
         pthread_mutex_unlock(curr->mutex); // unlock it while leaving
         prev = curr;
         curr = curr->next;
-        inserted = TRUE;
+        
     }
     if (!inserted)
     { // if not inserted insert after last node after alllocating proper space
@@ -86,7 +88,7 @@ list_entry *llist_find_by_sockfd(list_entry *list_start, int sockfd)
 }
 
 list_entry *llist_find_by_nickname(list_entry *list_start, char *nickname)
-{//simple searching function
+{ // simple searching function
     list_entry *cur = list_start;
     while (cur != NULL)
     {
@@ -102,25 +104,28 @@ list_entry *llist_find_by_nickname(list_entry *list_start, char *nickname)
     }
     return NULL;
 }
-//count of nodes with actual clients
+// count of nodes with actual clients
 int llist_get_count(list_entry *list_start)
 {
     list_entry *cur = list_start;
     int count = 0;
-    while (cur != NULL) {
+    while (cur != NULL)
+    {
         pthread_mutex_lock(cur->mutex);
-        if (cur->client_info != NULL) count++;
+        if (cur->client_info != NULL)
+            count++;
         pthread_mutex_unlock(cur->mutex);
         cur = cur->next;
     }
     return count;
 }
-//copies nicknames to array and returns their count
+// copies nicknames to array and returns their count
 int llist_get_nicknames(list_entry *list_start, char **nicks)
 {
     list_entry *cur = list_start;
     int count = 0;
-    while (cur != NULL) {
+    while (cur != NULL)
+    {
         pthread_mutex_lock(cur->mutex);
         if (cur->client_info != NULL)
             strncpy(nicks[count++], cur->client_info->nickname, 19);
